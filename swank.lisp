@@ -1093,8 +1093,8 @@ The processing is done in the extent of the toplevel restart."
        :presentation-start :presentation-end
        :new-package :new-features :ed :indentation-update
        :eval :eval-no-wait :background-message :inspect :ping
-       :y-or-n-p :read-from-minibuffer :read-string :read-aborted :test-delay
-       :write-image)
+       :y-or-n-p :read-from-minibuffer :read-string :read-aborted
+       :test-delay :write-image :read-passwd)
       &rest _)
      (declare (ignore _))
      (encode-message event (current-socket-io)))
@@ -1429,6 +1429,15 @@ entered nothing, returns NIL when user pressed C-g."
                                            ,prompt ,initial-value))
     (third (wait-for-event `(:emacs-return ,tag result)))))
 
+(defun read-passwd-in-emacs (prompt &optional confirm default)
+  "Ask user a question in Emacs' minibuffer. Returns \"\" when user
+entered nothing, returns NIL when user pressed C-g."
+  (check-type prompt string) 
+  (let ((tag (make-tag)))
+    (force-output)
+    (send-to-emacs `(:read-passwd ,(current-thread-id) ,tag
+                                  ,prompt ,confirm ,default))
+    (third (wait-for-event `(:emacs-return ,tag result)))))
 
 (defun process-form-for-emacs (form)
   "Returns a string which emacs will read as equivalent to

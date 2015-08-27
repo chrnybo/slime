@@ -2215,6 +2215,8 @@ Debugged requests are ignored."
           ((:read-from-minibuffer thread tag prompt initial-value)
            (slime-read-from-minibuffer-for-swank thread tag prompt
                                                  initial-value))
+          ((:read-passwd thread tag prompt &optional confirm default)
+           (slime-read-passwd-for-swank thread tag prompt confirm default))
           ((:y-or-n-p thread tag question)
            (slime-y-or-n-p thread tag question))
           ((:emacs-return-string thread tag string)
@@ -3600,6 +3602,13 @@ reading input.  The result is a string (\"\" if no input was given)."
     (read-from-minibuffer prompt initial-value slime-minibuffer-map
 			  nil (or history 'slime-minibuffer-history))))
 
+(defun slime-read-passwd (prompt &optional confirm default)
+  "Read a string from the minibuffer, prompting with PROMPT.
+ If INITIAL-VALUE is non-nil, it is inserted into the minibuffer before
+ reading input.  The result is a string (\"\" if no input was given)."
+  (let ((minibuffer-setup-hook (slime-minibuffer-setup-hook)))
+    (read-passwd prompt confirm default)))
+
 (defun slime-bogus-completion-alist (list)
   "Make an alist out of list.
 The same elements go in the CAR, and nil in the CDR. To support the
@@ -3938,6 +3947,12 @@ the display stuff that we neither need nor want."
 (defun slime-read-from-minibuffer-for-swank (thread tag prompt initial-value)
   (let ((answer (condition-case nil
                     (slime-read-from-minibuffer prompt initial-value)
+                  (quit nil))))
+    (slime-dispatch-event `(:emacs-return ,thread ,tag ,answer))))
+
+(defun slime-read-passwd-for-swank (thread tag prompt &optional confirm default)
+  (let ((answer (condition-case nil
+                    (slime-read-passwd prompt confirm default)
                   (quit nil))))
     (slime-dispatch-event `(:emacs-return ,thread ,tag ,answer))))
 
